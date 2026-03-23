@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/GabrielAguiarFidelis/FirstAPI#readme",
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.57.2",
     "@supabase/supabase-js": "^2.99.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
