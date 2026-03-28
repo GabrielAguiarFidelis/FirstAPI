@@ -1,76 +1,129 @@
 import express from 'express'
 import { supabase } from '../config/supabase.js'
+import bcrypt from 'bcrypt'
 
 const router = express.Router()
 
 const planosValidos = ['FREE', 'PRO', 'PREMIUM']
 
-// Criar usuário
+// 🔹 CREATE (POST)
 router.post('/', async (req, res) => {
-  const { nome, email, plano } = req.body
+  const { nome, email, password, plano } = req.body
 
-  // validação simples
-  if (!nome || !email || !plano) {
-    return res.status(400).json({ erro: 'Preencha todos os campos' })
+  if (!nome || !email || !password || !plano) {
+    return res.status(400).json({ error: 'Preencha todos os campos' })
   }
 
   if (!planosValidos.includes(plano)) {
-    return res.status(400).json({ erro: 'Plano inválido' })
+    return res.status(400).json({ error: 'Plano inválido' })
   }
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .insert([{ nome, email, plano }])
-    .select() // ✅ força retorno
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10)
 
-  if (error) return res.status(400).json(error)
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([{ nome, email, password: hashedPassword, plano }])
+      .select()
 
-  res.json(data)
+    if (error) throw error
+
+    res.status(201).json(data[0])
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
-// Listar usuários
+
+// 🔹 READ ALL (GET)
 router.get('/', async (req, res) => {
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
 
-  if (error) return res.status(400).json(error)
+    if (error) throw error
 
-  res.json(data)
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
-// Atualizar plano
+
+// 🔹 READ BY ID (GET)
+router.get('/:id', async (req, res) => {
+  const { id } = req.params
+
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+
+    res.json(data)
+  } catch (err) {
+    res.status(404).json({ error: 'Usuário não encontrado' })
+  }
+})
+
+
+// 🔹 UPDATE (PUT)
 router.put('/:id', async (req, res) => {
   const { id } = req.params
-  const { plano } = req.body
+  const { nome, email, password, plano } = req.body
 
-  if (!planosValidos.includes(plano)) {
-    return res.status(400).json({ erro: 'Plano inválido' })
+  try {
+    let updateData = {}
+
+    if (nome) updateData.nome = nome
+    if (email) updateData.email = email
+
+    if (plano) {
+      if (!planosValidos.includes(plano)) {
+        return res.status(400).json({ error: 'Plano inválido' })
+      }
+      updateData.plano = plano
+    }
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10)
+    }
+
+    const { data, error } = await supabase
+      .from('usuarios')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+
+    if (error) throw error
+
+    res.json(data[0])
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
-
-  const { data, error } = await supabase
-    .from('usuarios')
-    .update({ plano })
-    .eq('id', id)
-    .select()
-
-  if (error) return res.status(400).json(error)
-
-  res.json(data)
 })
 
+
+// 🔹 DELETE
 router.delete('/:id', async (req, res) => {
   const { id } = req.params
 
-  const { data, error } = await supabase
-    .from('usuarios')
-    .delete()
-    .eq('id', id)
-    .select()
+  try {
+    const { error } = await supabase
+      .from('usuarios')
+      .delete()
+      .eq('id', id)
 
-  if (error) return res.status(400).json(error)
+    if (error) throw error
 
-  res.json(data)
+    res.json({ message: 'Usuário deletado com sucesso' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 export default router
