@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json()); // ✅ TEM QUE VIR ANTES DAS ROTAS
 
 app.use("/usuarios", usuariosRoutes);
-app.use("/login", authRoutes);
+app.use("/", authRoutes);
 
 app.get("/", (req, res) => {
   req.body; // ✅ para testar se o JSON está sendo lido
