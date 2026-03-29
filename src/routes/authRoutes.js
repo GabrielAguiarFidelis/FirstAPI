@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email e senha são obrigatórios" });
@@ -25,7 +25,7 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const senhaValida = await bcrypt.compare(password, data.password); 
+    const senhaValida = await bcrypt.compare(password, data.password);
 
     if (!senhaValida) {
       return res.status(401).json({ error: "Senha inválida" });
@@ -47,7 +47,7 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Erro interno do servidor" });
+    return res.status(500).json({ error: "Erro interno" });
   }
 });
 
