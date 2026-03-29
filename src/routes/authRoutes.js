@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
-const emailFormatado = email.trim().toLowerCase();
 
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
@@ -12,6 +11,8 @@ router.post("/", async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ error: "Email e senha são obrigatórios" });
   }
+
+  const emailFormatado = email.trim().toLowerCase();
 
   try {
     const { data, error } = await supabase
