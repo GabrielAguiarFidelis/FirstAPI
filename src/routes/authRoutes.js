@@ -51,4 +51,8 @@ router.post("/", async (req, res) => {
   }
 });
 
+console.log("EMAIL:", emailFormatado);
+console.log("DATA:", data);
+console.log("ERROR:", error);
+
 export default router;
