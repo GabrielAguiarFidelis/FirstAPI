@@ -19,7 +19,6 @@ router.post("/", async (req, res) => {
       .from("usuarios")
       .select("*")
       .eq("email", emailFormatado)
-      .single();
 
     if (error || !data) {
       return res.status(404).json({ error: "Usuário não encontrado" });
