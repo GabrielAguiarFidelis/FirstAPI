@@ -10,6 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json()); // ✅ TEM QUE VIR ANTES DAS ROTAS
+app.use(express.urlencoded({ extended: true }))
 
 app.use("/login", authRoutes);
 app.use("/usuarios", usuariosRoutes);

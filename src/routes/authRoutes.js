@@ -12,19 +12,19 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Email e senha são obrigatórios" });
   }
 
-  const emailFormatado = email.trim().toLowerCase();
-
   try {
     const { data, error } = await supabase
       .from("usuarios")
       .select("*")
-      .eq("email", emailFormatado)
+      .eq("email", email)
+
+    const user = data[0]
 
     if (error || !data) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const senhaValida = await bcrypt.compare(password, data.password);
+    const senhaValida = await bcrypt.compare(password, user.password);
 
     if (!senhaValida) {
       return res.status(401).json({ error: "Senha inválida" });
@@ -36,11 +36,11 @@ router.post("/", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    delete data.password;
+    delete user.password;
 
     return res.json({
       message: "Login realizado com sucesso",
-      user: data,
+      user: user,
       token,
     });
 
@@ -49,9 +49,5 @@ router.post("/", async (req, res) => {
     return res.status(500).json({ error: "Erro interno" });
   }
 });
-
-console.log("EMAIL:", emailFormatado);
-console.log("DATA:", data);
-console.log("ERROR:", error);
 
 export default router;
