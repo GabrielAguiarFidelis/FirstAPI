@@ -3,10 +3,12 @@ import cors from "cors";
 import dotenv from "dotenv";
 import usuariosRoutes from "./src/routes/usuarios.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import Stripe from "stripe";
 
 dotenv.config();
 
 const app = express();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json()); // ✅ TEM QUE VIR ANTES DAS ROTAS
@@ -14,6 +16,52 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use("/login", authRoutes);
 app.use("/usuarios", usuariosRoutes);
+
+// ====================== CRIA CHECKOUT SESSION ======================
+app.post("/create-checkout-session", async (req, res) => {
+  const { email, plano } = req.body;
+
+  if (!email || !plano) {
+    return res.status(400).json({ error: "Email e plano são obrigatórios" });
+  }
+
+  // Mapeamento dos Price IDs (substitua pelos seus reais)
+  const priceMap = {
+    "PRO": "price_1THTnvJPuLtnJsg33YEa1g29",       // ← cole o Price ID do PRO
+    "PREMIUM": "price_1THTquJPuLtnJsg3wNzM5bpb" // ← cole o Price ID do PREMIUM
+  };
+
+  const priceId = priceMap[plano.toUpperCase()];
+
+  if (!priceId) {
+    return res.status(400).json({ error: "Plano inválido para pagamento" });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",           // importante: é assinatura recorrente
+      payment_method_types: ["card"],
+      customer_email: email,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&plano=${plano}`,
+      cancel_url: `${req.headers.origin}/index.html`,   // volta para a página de login/cadastro
+      metadata: {
+        email: email,
+        plano: plano
+      }
+    });
+
+    res.json({ url: session.url });   // retorna a URL do Checkout do Stripe
+  } catch (error) {
+    console.error("Erro Stripe:", error);
+    res.status(500).json({ error: "Erro ao criar sessão de pagamento" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.send(`
