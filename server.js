@@ -26,7 +26,7 @@ app.get("/", (req, res) => {
       <style>
         body {
           font-family: Arial, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(130deg, #080e2f 0%, #140f96 100%);
           color: white;
           height: 100vh;
           margin: 0;
